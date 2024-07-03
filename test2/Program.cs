@@ -2,26 +2,58 @@
 using Microsoft.Extensions.DependencyInjection;
 using MedicalRecordsSystem.Services.CurrencyRetrievers;
 using MedicalRecordsSystem.Services.HospitalServices;
+using MedicalRecordsSystem.models;
+using MedicalRecordsSystem.Interfaces;
 
 namespace MedicalRecordsSystem;
 
 internal class Program
 {
+    private static CurrencyRatesResponse _georgianCurrencyRates = new();
     public static void Main(string[] args)
     {
         var serviceProvider = new ServiceCollection()
        .AddHttpClient()
-       .AddTransient<GeorgianCurrencyRetriever>()
        .BuildServiceProvider();
 
-        // Retrieve the IHttpClientFactory
+        // Retrieve the IHttpClientFactory and ILogger
         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 
-        var client = httpClientFactory.CreateClient();
         // Use the factory to create an HttpClient
+        var client = httpClientFactory.CreateClient();
 
-        //var patientManager = new PatientManager();
-        var invoiceManager = new InvoiceManager(client);
+        List<ICurrencyRatesRetriever> currencyRatesRetrievers =
+        [
+            new GeorgianCurrencyRetriever(client),
+            new AzerbaijanCurrencyRetriever(client),
+            new ArmenianCurrencyRetriever(client),
+        ];
+
+        List<string> filePaths =
+        [
+            "georgianCurrency.txt",
+            "azerbaijanCurrency.txt",
+            "armeniaCurrency.txt",
+        ];
+
+        List<Thread> threads = [];
+
+        for (int i = 0; i < currencyRatesRetrievers.Count; i++)
+        {
+            int index = i;
+            Thread thread = new(() => FetchCurrencyRates(currencyRatesRetrievers[index], filePaths[index]));
+            threads.Add(thread);
+            thread.Start();
+        }
+
+        // Wait for all threads to complete
+        foreach (var thread in threads)
+        {
+            thread.Join();
+        }
+
+        Console.WriteLine("All currency rates have been fetched.");
+        Console.WriteLine();
 
         PatientManager.GetAllPatients();
 
@@ -53,7 +85,7 @@ internal class Program
                         MedicalServicesOptions.ListServices();
                         break;
                     case "4":
-                        MedicalServicesOptions.IssueInvoice(invoiceManager);
+                        MedicalServicesOptions.IssueInvoice(_georgianCurrencyRates);
                         break;
                     case "5":
                         PatientOptions.ListAllPatients();
@@ -76,5 +108,37 @@ internal class Program
                 Console.WriteLine($"Error: {ex.Message}");
             }
         }
-    }  
+    }
+
+    public static void FetchCurrencyRates(ICurrencyRatesRetriever retriever, string filePath)
+    {
+        Console.WriteLine($"Thread started for {retriever.GetType().Name}");
+
+        try
+        {
+            CurrencyRatesResponse data = retriever.RetrieveDataAsync(DateTime.Now).Result;
+            if (data != null )
+            {
+                WriteDataToFile.WriteCurrenciesToFile(data, filePath);
+                Console.WriteLine($"Thread for {retriever.GetType().Name} fetched data successfully.");
+
+                if (retriever is GeorgianCurrencyRetriever)
+                {
+                    _georgianCurrencyRates = data;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Thread for {retriever.GetType().Name} did not fetch any data.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred in thread for {retriever.GetType().Name}: {ex.Message}");
+        }
+
+
+        Console.WriteLine($"Thread ended for {retriever.GetType().Name}");
+        Console.WriteLine();
+    }
 }

@@ -26,14 +26,10 @@ public class Valute
     public decimal Value { get; set; }
 }
 
-internal class AzerbaijanCurrencyRetriever : ICurrencyRatesRetriever
+internal class AzerbaijanCurrencyRetriever(HttpClient httpClient) : ICurrencyRatesRetriever
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient = httpClient;
 
-    public AzerbaijanCurrencyRetriever(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
     public async Task<CurrencyRatesResponse> RetrieveDataAsync(DateTime date)
     {
         string url = $"https://www.cbar.az/currencies/{date.ToString("dd.MM.yyyy")}.xml";

@@ -22,8 +22,6 @@ internal class WriteDataToFile
                     writer.WriteLine($"{amount}{kvp.Key} = {kvp.Value} {data.MainCurrency}");
                 }
             }
-
-            Console.WriteLine("Data has been written to the file.");
         }
         catch (Exception ex)
         {

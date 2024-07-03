@@ -5,14 +5,10 @@ using MedicalRecordsSystem.Interfaces;
 
 namespace MedicalRecordsSystem.Services.CurrencyRetrievers;
 
-internal class ArmenianCurrencyRetriever : ICurrencyRatesRetriever
+internal class ArmenianCurrencyRetriever(HttpClient httpClient) : ICurrencyRatesRetriever
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient = httpClient;
 
-    public ArmenianCurrencyRetriever(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
     public async Task<CurrencyRatesResponse> RetrieveDataAsync(DateTime date)
     {
         string url = "http://api.cba.am/exchangerates.asmx";

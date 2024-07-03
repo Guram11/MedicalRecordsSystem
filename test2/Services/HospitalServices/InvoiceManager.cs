@@ -1,19 +1,12 @@
 ﻿using MedicalRecordsSystem.Models;
-using MedicalRecordsSystem.Services.CurrencyRetrievers;
 using MedicalRecordsSystem.models;
-using MedicalRecordsSystem.Utils;
 
 namespace MedicalRecordsSystem.Services.HospitalServices;
 
-internal class InvoiceManager(HttpClient httpClient)
+internal class InvoiceManager()
 {
-    private readonly HttpClient _httpClient = httpClient;
-
-    public async Task<Invoice> IssueInvoice(IEnumerable<MedicalRecord> records, string currency)
+    public static Invoice IssueInvoice(IEnumerable<MedicalRecord> records, string currency, CurrencyRatesResponse currencyRates)
     {
-        CurrencyRatesResponse currencyRates = await new GeorgianCurrencyRetriever(_httpClient).RetrieveDataAsync(DateTime.Now);
-        WriteDataToFile.WriteCurrenciesToFile(currencyRates, "rates.txt");
-
         decimal sumPrice = 0.0m;
 
         foreach (var record in records)
@@ -21,20 +14,6 @@ internal class InvoiceManager(HttpClient httpClient)
             var servicePrice = HospitalServices.Services.FirstOrDefault(p => p.Key == record.ServiceName).Value.Price;
             sumPrice += servicePrice;
             record.IsPaid = true;
-        }
-
-        string currencyNameInGeorgian = String.Empty;
-        if(currency == "USD")
-        {
-            currencyNameInGeorgian = "1 აშშ დოლარი";
-        }
-        else if (currency == "EUR")
-        {
-            currencyNameInGeorgian = "1 ევრო";
-        }
-        else
-        {
-            currencyNameInGeorgian = "GEL";
         }
 
         decimal rate = 1.0m;
@@ -46,7 +25,7 @@ internal class InvoiceManager(HttpClient httpClient)
 
         foreach (KeyValuePair<string, decimal> kvp in currencyRates.Rates)
         {
-            if (kvp.Key == currencyNameInGeorgian)
+            if (kvp.Key == currency)
             {
                 rate = kvp.Value;
             }

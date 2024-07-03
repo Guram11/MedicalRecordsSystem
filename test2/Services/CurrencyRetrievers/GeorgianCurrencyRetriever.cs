@@ -11,7 +11,7 @@ public class GeorgianCurrencyRetriever(HttpClient httpClient) : ICurrencyRatesRe
 
     public async Task<CurrencyRatesResponse> RetrieveDataAsync(DateTime date)
     {
-        string url = $"https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/ka/rss?date={date.ToString()}";
+        string url = $"https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/ka/rss?date={date}";
 
         HttpResponseMessage response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
@@ -51,7 +51,7 @@ public class GeorgianCurrencyRetriever(HttpClient httpClient) : ICurrencyRatesRe
                     var cells = row.SelectNodes("td").ToList();
                     if (cells.Count >= 3)
                     {
-                        var currencyCode = cells[1].InnerText.Trim();
+                        var currencyCode = cells[0].InnerText.Trim();
                         var rate = decimal.Parse(cells[2].InnerText.Trim());
 
 
