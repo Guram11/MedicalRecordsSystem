@@ -4,6 +4,7 @@ using MedicalRecordsSystem.Services.CurrencyRetrievers;
 using MedicalRecordsSystem.Services.HospitalServices;
 using MedicalRecordsSystem.models;
 using MedicalRecordsSystem.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace MedicalRecordsSystem;
 
@@ -14,10 +15,16 @@ internal class Program
     {
         var serviceProvider = new ServiceCollection()
        .AddHttpClient()
+       .AddLogging(configure =>
+       {
+           configure.AddConsole();
+           configure.SetMinimumLevel(LogLevel.Warning);
+       })
        .BuildServiceProvider();
 
         // Retrieve the IHttpClientFactory and ILogger
         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        var logger = serviceProvider.GetService<ILogger<Program>>();
 
         // Use the factory to create an HttpClient
         var client = httpClientFactory.CreateClient();
@@ -38,10 +45,19 @@ internal class Program
 
         List<Thread> threads = [];
 
+
+        if(logger is null)
+        {
+            throw new Exception("Logger is null");
+        }
+
+        logger.LogWarning("Started fetching currency rates");
+
         for (int i = 0; i < currencyRatesRetrievers.Count; i++)
         {
             int index = i;
-            Thread thread = new(() => FetchCurrencyRates(currencyRatesRetrievers[index], filePaths[index]));
+            Thread thread = new(() => FetchCurrencyRates(currencyRatesRetrievers[index], filePaths[index], index));
+            
             threads.Add(thread);
             thread.Start();
         }
@@ -52,8 +68,8 @@ internal class Program
             thread.Join();
         }
 
-        Console.WriteLine("All currency rates have been fetched.");
-        Console.WriteLine();
+        logger.LogWarning("All currency rates have been fetched.");
+        logger.LogWarning("-------------------------------------");
 
         PatientManager.GetAllPatients();
 
@@ -110,9 +126,9 @@ internal class Program
         }
     }
 
-    public static void FetchCurrencyRates(ICurrencyRatesRetriever retriever, string filePath)
+    static void FetchCurrencyRates(ICurrencyRatesRetriever retriever, string filePath, int index)
     {
-        Console.WriteLine($"Thread started for {retriever.GetType().Name}");
+        Console.WriteLine($"Thread {index + 1} started for {retriever.GetType().Name}");
 
         try
         {
@@ -120,7 +136,7 @@ internal class Program
             if (data != null )
             {
                 WriteDataToFile.WriteCurrenciesToFile(data, filePath);
-                Console.WriteLine($"Thread for {retriever.GetType().Name} fetched data successfully.");
+                Console.WriteLine($"Thread {index + 1} for {retriever.GetType().Name} fetched data successfully.");
 
                 if (retriever is GeorgianCurrencyRetriever)
                 {
@@ -129,7 +145,7 @@ internal class Program
             }
             else
             {
-                Console.WriteLine($"Thread for {retriever.GetType().Name} did not fetch any data.");
+                Console.WriteLine($"Thread {index + 1} for {retriever.GetType().Name} did not fetch any data.");
             }
         }
         catch (Exception ex)
@@ -138,7 +154,7 @@ internal class Program
         }
 
 
-        Console.WriteLine($"Thread ended for {retriever.GetType().Name}");
+        Console.WriteLine($"Thread {index + 1} ended for {retriever.GetType().Name}");
         Console.WriteLine();
     }
 }
