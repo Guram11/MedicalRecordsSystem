@@ -69,7 +69,7 @@ internal class PatientOptions
 
         try
         {
-            var patient = new Patient(firstName, lastName, dob, id, nationality);
+            var patient = new Patient() { FirstName = firstName, LastName = lastName, Nationality = nationality, DateOfBirth = dob, Id = id};
             PatientManager.AddPatient(patient);
             PatientManager.WritePatientDataToFile();
         }

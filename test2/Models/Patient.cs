@@ -2,33 +2,19 @@
 
 internal class Patient
 {
-    public int Id { get; set; }
+    public required int Id { get; set; }
 
-    public string FirstName { get; set; }
+    public required string FirstName { get; set; }
 
-    public string LastName { get; set; }
+    public required string LastName { get; set; }
 
-    public DateTime DateOfBirth { get; set; }
+    public required DateTime DateOfBirth { get; set; }
 
     public int Age => CalculateAge(DateOfBirth);
 
-    public string Nationality { get; set; }
+    public required string Nationality { get; set; }
 
     public List<MedicalRecord> MedicalRecords { get; set; } = [];
-
-    public Patient()
-    {
-        MedicalRecords = [];
-    }
-
-    public Patient(string firstName, string lastName, DateTime dob, int idNumber, string nationality)
-    {
-        Id = idNumber;
-        FirstName = firstName;
-        LastName = lastName;
-        DateOfBirth = dob;
-        Nationality = nationality;
-    }
 
     private static int CalculateAge(DateTime dob)
     {
