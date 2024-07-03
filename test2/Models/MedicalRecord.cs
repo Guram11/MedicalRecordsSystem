@@ -1,25 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MedicalRecordsSystem.Models;
 
-namespace MedicalRecordsSystem.Models
+internal class MedicalRecord(DateTime date, int patientId, string serviceName) : BaseEntity()
 {
-    internal class MedicalRecord
-    {
-        public int Id { get; set; } = 1;
-        public DateTime Date {  get; set; }
-        public int PatientId { get; set; }
-        public string? ServiceName { get; set; }
-        bool IsPaid { get; set; }
-        public MedicalRecord(DateTime date, int patientId, string serviceName)
-        {
-            Id++;
-            Date = date;
-            PatientId = patientId;
-            ServiceName = serviceName;
-            IsPaid = false;
-        }
-    }
+
+    public DateTime Date { get; set; } = date;
+
+    public int PatientId { get; set; } = patientId;
+
+    public string ServiceName { get; set; } = serviceName;
+
+    public bool IsPaid { get; set; } = false;
 }
