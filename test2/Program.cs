@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MedicalRecordsSystem.Services.CurrencyRetrievers;
 using MedicalRecordsSystem.Services.HospitalServices;
 using MedicalRecordsSystem.models;
-using MedicalRecordsSystem.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace MedicalRecordsSystem;
@@ -11,65 +10,34 @@ namespace MedicalRecordsSystem;
 internal class Program
 {
     private static CurrencyRatesResponse _georgianCurrencyRates = new();
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var serviceProvider = new ServiceCollection()
-       .AddHttpClient()
-       .AddLogging(configure =>
-       {
-           configure.AddConsole();
-           configure.SetMinimumLevel(LogLevel.Warning);
-       })
-       .BuildServiceProvider();
+            .AddLogging(configure => configure.AddConsole())
+            .AddHttpClient()
+            .BuildServiceProvider();
 
-        // Retrieve the IHttpClientFactory and ILogger
-        var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-        var logger = serviceProvider.GetService<ILogger<Program>>();
+        var logger = serviceProvider.GetService<ILogger<CurrencyRatesService>>();
+        var httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
 
-        // Use the factory to create an HttpClient
-        var client = httpClientFactory.CreateClient();
-
-        List<ICurrencyRatesRetriever> currencyRatesRetrievers =
-        [
-            new GeorgianCurrencyRetriever(client),
-            new AzerbaijanCurrencyRetriever(client),
-            new ArmenianCurrencyRetriever(client),
-        ];
-
-        List<string> filePaths =
-        [
-            "georgianCurrency.txt",
-            "azerbaijanCurrency.txt",
-            "armeniaCurrency.txt",
-        ];
-
-        List<Thread> threads = [];
-
-
-        if(logger is null)
+        if (logger is null)
         {
             throw new Exception("Logger is null");
         }
 
-        logger.LogWarning("Started fetching currency rates");
-
-        for (int i = 0; i < currencyRatesRetrievers.Count; i++)
+        if (httpClientFactory is null)
         {
-            int index = i;
-            Thread thread = new(() => FetchCurrencyRates(currencyRatesRetrievers[index], filePaths[index], index));
-            
-            threads.Add(thread);
-            thread.Start();
+            throw new Exception("httpClientFactory is null");
         }
 
-        // Wait for all threads to complete
-        foreach (var thread in threads)
-        {
-            thread.Join();
-        }
+        var cts = new CancellationTokenSource();
+        var fetcher = new CurrencyRatesService(logger, httpClientFactory);
 
-        logger.LogWarning("All currency rates have been fetched.");
-        logger.LogWarning("-------------------------------------");
+        // Fetch initial currency rates
+        _georgianCurrencyRates = await fetcher.FetchInitialRatesAsync();
+
+        // Start the background task
+        var fetcherTask = fetcher.StartAsync(cts.Token);
 
         PatientManager.GetAllPatients();
 
@@ -83,7 +51,7 @@ internal class Program
             Console.WriteLine("5. List all patients");
             Console.WriteLine("6. Delete a patient");
             Console.WriteLine("7. Delete a medical record");
-            Console.WriteLine("8. Exit");
+            Console.WriteLine("8. Exit and stop background task");
 
             var choice = Console.ReadLine();
 
@@ -113,6 +81,9 @@ internal class Program
                         MedicalServicesOptions.DeleteMedicalRecord();
                         break;
                     case "8":
+                        // Signal the cancellation and wait for the task to complete
+                        cts.Cancel();
+                        await fetcherTask;
                         return;
                     default:
                         Console.WriteLine("Invalid option. Please try again.");
@@ -124,37 +95,5 @@ internal class Program
                 Console.WriteLine($"Error: {ex.Message}");
             }
         }
-    }
-
-    static void FetchCurrencyRates(ICurrencyRatesRetriever retriever, string filePath, int index)
-    {
-        Console.WriteLine($"Thread {index + 1} started for {retriever.GetType().Name}");
-
-        try
-        {
-            CurrencyRatesResponse data = retriever.RetrieveDataAsync(DateTime.Now).Result;
-            if (data != null )
-            {
-                WriteDataToFile.WriteCurrenciesToFile(data, filePath);
-                Console.WriteLine($"Thread {index + 1} for {retriever.GetType().Name} fetched data successfully.");
-
-                if (retriever is GeorgianCurrencyRetriever)
-                {
-                    _georgianCurrencyRates = data;
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Thread {index + 1} for {retriever.GetType().Name} did not fetch any data.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred in thread for {retriever.GetType().Name}: {ex.Message}");
-        }
-
-
-        Console.WriteLine($"Thread {index + 1} ended for {retriever.GetType().Name}");
-        Console.WriteLine();
     }
 }

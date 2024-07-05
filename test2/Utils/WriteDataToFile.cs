@@ -4,7 +4,7 @@ namespace MedicalRecordsSystem.Utils;
 
 internal class WriteDataToFile
 {
-    public static void WriteCurrenciesToFile(CurrencyRatesResponse data, string filePath)
+    public static void WriteCurrenciesToFile(CurrencyRatesResponse data, DateTime date)
     {
         try
         {
@@ -13,19 +13,20 @@ internal class WriteDataToFile
                 throw new Exception("Data does not contain currency rates!");
             }
 
-            using (StreamWriter writer = new(filePath))
-            {
-                var amount = data.MainCurrency == "AMD" ? "1" : "";
-                foreach (KeyValuePair<string, decimal> kvp in data.Rates)
-                {
+            var filePath = $"currency-rates-{date:yyyy-MM-dd-h-m-s}.txt";
 
-                    writer.WriteLine($"{amount}{kvp.Key} = {kvp.Value} {data.MainCurrency}");
-                }
+            using StreamWriter writer = new(filePath);
+
+            var amount = data.MainCurrency == "AMD" ? "1" : "";
+            foreach (KeyValuePair<string, decimal> kvp in data.Rates)
+            {
+
+                writer.WriteLine($"{amount}{kvp.Key} = {kvp.Value} {data.MainCurrency}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error writing data to {filePath}: {ex.Message}");
+            Console.WriteLine($"Error writing data to file: {ex.Message}");
         }
     }
 }
