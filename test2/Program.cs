@@ -13,7 +13,8 @@ internal class Program
     public static async Task Main(string[] args)
     {
         var serviceProvider = new ServiceCollection()
-            .AddLogging(configure => configure.AddConsole())
+            .AddHostedService<CurrencyRatesService>()
+            .AddSingleton<ILoggerProvider, FileLoggerProvider>()
             .AddHttpClient()
             .BuildServiceProvider();
 

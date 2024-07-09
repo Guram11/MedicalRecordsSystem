@@ -2,12 +2,13 @@
 using MedicalRecordsSystem.Interfaces;
 using MedicalRecordsSystem.models;
 using MedicalRecordsSystem.Utils;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Xml.Linq;
 
 namespace MedicalRecordsSystem.Services.CurrencyRetrievers;
 
-internal class CurrencyRatesService(ILogger<CurrencyRatesService> logger, IHttpClientFactory httpClientFactory) : ICurrencyRatesRetriever
+internal class CurrencyRatesService(ILogger<CurrencyRatesService> logger, IHttpClientFactory httpClientFactory) : IHostedService, ICurrencyRatesRetriever
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
     private readonly ILogger<CurrencyRatesService> _logger = logger;
@@ -57,6 +58,11 @@ internal class CurrencyRatesService(ILogger<CurrencyRatesService> logger, IHttpC
                 _logger.LogError(ex, "An error occurred while fetching currency rates.");
             }
         }
+    }
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Stopping CurrencyRatesService.");
+        await Task.CompletedTask;
     }
 
     public async Task<CurrencyRatesResponse> FetchRatesAsync(DateTime date)
