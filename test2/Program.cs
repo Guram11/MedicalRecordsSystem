@@ -15,24 +15,12 @@ internal class Program
         var serviceProvider = new ServiceCollection()
             .AddHostedService<CurrencyRatesService>()
             .AddSingleton<ILoggerProvider, FileLoggerProvider>()
+            .AddSingleton<CurrencyRatesService>()
             .AddHttpClient()
             .BuildServiceProvider();
 
-        var logger = serviceProvider.GetService<ILogger<CurrencyRatesService>>();
-        var httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
-
-        if (logger is null)
-        {
-            throw new Exception("Logger is null");
-        }
-
-        if (httpClientFactory is null)
-        {
-            throw new Exception("httpClientFactory is null");
-        }
-
+        var fetcher = serviceProvider.GetRequiredService<CurrencyRatesService>();
         var cts = new CancellationTokenSource();
-        var fetcher = new CurrencyRatesService(logger, httpClientFactory);
 
         // Fetch initial currency rates
         _georgianCurrencyRates = await fetcher.FetchInitialRatesAsync();
