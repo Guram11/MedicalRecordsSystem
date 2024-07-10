@@ -1,13 +1,15 @@
 ﻿using MedicalRecordsSystem.Models;
-using MedicalRecordsSystem.models;
+using MedicalRecordsSystem.Services.CurrencyRetrievers;
 
 namespace MedicalRecordsSystem.Services.HospitalServices;
 
 internal class InvoiceManager()
 {
-    public static Invoice IssueInvoice(IEnumerable<MedicalRecord> records, string currency, CurrencyRatesResponse currencyRates)
+    public static Invoice IssueInvoice(IEnumerable<MedicalRecord> records, string currency)
     {
         decimal sumPrice = 0.0m;
+
+        var currencyRates = CurrencyRatesService.CurrentRates ?? throw new Exception("Currency rates in null");
 
         foreach (var record in records)
         {

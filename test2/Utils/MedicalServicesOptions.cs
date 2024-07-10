@@ -1,5 +1,4 @@
-﻿using MedicalRecordsSystem.models;
-using MedicalRecordsSystem.Models;
+﻿using MedicalRecordsSystem.Models;
 using MedicalRecordsSystem.Services.HospitalServices;
 
 namespace MedicalRecordsSystem.Utils;
@@ -106,7 +105,7 @@ internal static class MedicalServicesOptions
         }
     }
 
-    public static void IssueInvoice(CurrencyRatesResponse currencyRates)
+    public static void IssueInvoice()
     {
         int patientId;
         string currency;
@@ -159,7 +158,7 @@ internal static class MedicalServicesOptions
 
         if (records != null)
         {
-            var invoice = InvoiceManager.IssueInvoice(records, currency, currencyRates);
+            var invoice = InvoiceManager.IssueInvoice(records, currency);
             Console.WriteLine($"Invoice issued for {patient.FirstName} {patient.LastName}");
             Console.WriteLine($"Base Price (GEL): {invoice.BasePrice}");
             Console.WriteLine($"Converted Price ({invoice.Currency}): {invoice.ConvertedPrice}");
