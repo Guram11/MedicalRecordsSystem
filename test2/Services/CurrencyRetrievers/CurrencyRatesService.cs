@@ -10,7 +10,6 @@ namespace MedicalRecordsSystem.Services.CurrencyRetrievers
 {
     internal class CurrencyRatesService(ILogger<CurrencyRatesService> logger, IHttpClientFactory httpClientFactory) : IHostedService, IDisposable, ICurrencyRatesRetriever
     {
-        private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
         private readonly ILogger<CurrencyRatesService> _logger = logger;
         private Timer? _timer = null;
         private static CurrencyRatesResponse? _currentRates;
@@ -65,7 +64,9 @@ namespace MedicalRecordsSystem.Services.CurrencyRetrievers
         {
             string url = $"https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/ka/rss?date={date}";
 
-            var response = await _httpClient.GetAsync(url);
+            using HttpClient client = httpClientFactory.CreateClient();
+
+            var response = await client.GetAsync(url);
 
             response.EnsureSuccessStatusCode();
             string data = await response.Content.ReadAsStringAsync();
