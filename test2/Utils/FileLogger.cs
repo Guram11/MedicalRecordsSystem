@@ -15,7 +15,8 @@ public class FileLogger(string filePath) : ILogger
 
         lock (_lock)
         {
-            File.AppendAllText(_filePath, logRecord);
+            using var streamWriter = new StreamWriter(_filePath, append: true);
+            streamWriter.Write(logRecord);
         }
     }
 

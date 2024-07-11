@@ -21,7 +21,7 @@ internal class WriteDataToFile
             foreach (KeyValuePair<string, decimal> kvp in data.Rates)
             {
 
-                writer.WriteLine($"{amount}{kvp.Key} = {kvp.Value} {data.MainCurrency}");
+                writer.WriteLine($"1 {amount}{kvp.Key} = {kvp.Value} {data.MainCurrency}");
             }
         }
         catch (Exception ex)
