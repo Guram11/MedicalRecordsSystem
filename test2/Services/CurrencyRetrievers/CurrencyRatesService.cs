@@ -18,7 +18,6 @@ namespace MedicalRecordsSystem.Services.CurrencyRetrievers
         public Task StartAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Starting CurrencyRatesService.");
-
             _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
             return Task.CompletedTask;
@@ -38,7 +37,7 @@ namespace MedicalRecordsSystem.Services.CurrencyRetrievers
                     WriteDataToFile.WriteCurrenciesToFile(_currentRates, _lastFetchTime);
                 }
 
-                _logger.LogInformation("Fetched new currency rates and wrote to file at {Time}.", _lastFetchTime);
+                _logger.LogInformation("Fetched new currency rates and wrote to file.");
             }
             catch (Exception ex)
             {
@@ -49,7 +48,6 @@ namespace MedicalRecordsSystem.Services.CurrencyRetrievers
         public Task StopAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Stopping CurrencyRatesService.");
-
             _timer?.Change(Timeout.Infinite, 0);
 
             return Task.CompletedTask;
@@ -67,7 +65,6 @@ namespace MedicalRecordsSystem.Services.CurrencyRetrievers
             using HttpClient client = httpClientFactory.CreateClient();
 
             var response = await client.GetAsync(url);
-
             response.EnsureSuccessStatusCode();
             string data = await response.Content.ReadAsStringAsync();
 
